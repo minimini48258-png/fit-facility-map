@@ -1,0 +1,49 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+#map { position: absolute; inset: 0; }
+
+#panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  background: rgba(252, 252, 251, 0.95);
+  border: 1px solid rgba(11, 11, 11, 0.1);
+  border-radius: 8px;
+  padding: 14px 16px;
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  color: #0b0b0b;
+}
+@media (prefers-color-scheme: dark) {
+  #panel {
+    background: rgba(26, 26, 25, 0.95);
+    border-color: rgba(255,255,255,0.1);
+    color: #ffffff;
+  }
+  #panel .source, #panel .meta { color: #c3c2b7; }
+}
+
+#panel h1 { font-size: 15px; margin: 0 0 6px; font-weight: 700; }
+#panel .source { font-size: 11px; margin: 0 0 4px; color: #52514e; }
+#panel .source a { color: inherit; }
+#panel .meta { font-size: 11px; margin: 0 0 10px; color: #898781; }
+
+.legend { border-top: 1px solid rgba(11,11,11,0.1); padding-top: 8px; margin-top: 8px; }
+@media (prefers-color-scheme: dark) { .legend { border-color: rgba(255,255,255,0.1); } }
+.legend-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 4px; cursor: pointer; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.2); }
+
+.size-legend .size-row { display: flex; align-items: center; gap: 10px; font-size: 12px; margin-bottom: 6px; }
+.size-dot { border-radius: 50%; background: #eda100; opacity: 0.55; border: 1px solid rgba(0,0,0,0.3); flex-shrink: 0; }
+
+.fit-popup { font-size: 13px; line-height: 1.5; min-width: 200px; }
+.fit-popup h3 { font-size: 13px; margin: 0 0 6px; }
+.fit-popup table { border-collapse: collapse; width: 100%; }
+.fit-popup td { padding: 2px 4px 2px 0; vertical-align: top; }
+.fit-popup td.k { color: #52514e; white-space: nowrap; padding-right: 8px; }
+.fit-popup .approx-note { margin-top: 6px; font-size: 11px; color: #898781; }

@@ -1,0 +1,34 @@
+name: Update FIT facility data
+
+on:
+  schedule:
+    # 毎月1日 18:00 UTC（日本時間 翌2日 03:00）に実行
+    - cron: "0 18 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Fetch FIT data and geocode
+        run: python scripts/fetch_and_process.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/facilities.geojson data/meta.json data/geocode_cache.json data/geocode_failures.json
+          git diff --cached --quiet || git commit -m "chore: update FIT facility data ($(date -u +%Y-%m-%d))"
+          git push

@@ -1,0 +1,4 @@
+.DS_Store
+data/_source_nagano.xlsx
+__pycache__/
+*.pyc
