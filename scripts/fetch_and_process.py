@@ -14,6 +14,7 @@ import re
 import sys
 import time
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -36,7 +37,8 @@ NAGANO_FILE_URL = (
 INCLUDED_CATEGORIES = {"太陽光", "風力", "水力", "水力（既設導水路活用型リプレース）", "バイオマス"}
 
 GSI_GEOCODE_URL = "https://msearch.gsi.go.jp/address-search/AddressSearch"
-GEOCODE_DELAY_SEC = 0.2
+GEOCODE_DELAY_SEC = 0.3
+GEOCODE_MAX_WORKERS = 3
 USER_AGENT = "fit-facility-map/1.0 (internal tool; contact via GitHub repo)"
 
 EXCEL_EPOCH = datetime(1899, 12, 30)
@@ -118,6 +120,20 @@ def load_json(path: Path, default):
     return default
 
 
+DIGIT_GROUP_RE = re.compile(r"[0-9０-９]+")
+
+
+def is_precise_match(query: str, title: str) -> bool:
+    """GSIは地番（番地）まで一致しない場合、番地部分を無言で落として大字・字レベルの
+    代表地点を返すことがある。クエリに含まれる番地の数字が結果のtitleに残っているかで
+    実際にどこまで一致したかを判定する（一致していなければ「概算」扱いにする）。"""
+    query_digits = DIGIT_GROUP_RE.findall(query)
+    if not query_digits:
+        return True
+    main_digit = max(query_digits, key=len)
+    return main_digit in title
+
+
 def geocode_address(address: str):
     """国土地理院 address-search API で住所→緯度経度。失敗時は段階的に住所を短くして再試行。"""
     candidates = [address]
@@ -141,31 +157,49 @@ def geocode_address(address: str):
             continue
         if results:
             lon, lat = results[0]["geometry"]["coordinates"]
-            approx = candidate != address
-            return {"lat": lat, "lon": lon, "approx": approx, "matched_query": candidate}
+            title = results[0]["properties"].get("title", "")
+            truncated = candidate != address
+            approx = truncated or not is_precise_match(candidate, title)
+            time.sleep(GEOCODE_DELAY_SEC)  # 各ワーカー自身のペース調整（合計レートを抑える）
+            return {
+                "lat": lat,
+                "lon": lon,
+                "approx": approx,
+                "matched_query": candidate,
+                "matched_title": title,
+            }
+    time.sleep(GEOCODE_DELAY_SEC)
     return None
 
 
 def build_geocode_index(records, cache: dict, failures: dict, checkpoint_every=200):
     unique_addresses = sorted({r["address"] for r in records if r["address"]})
-    to_fetch = [a for a in unique_addresses if a not in cache and a not in failures]
+    # matched_title が無いキャッシュは精度判定ロジック導入前のものなので再取得する
+    to_fetch = [
+        a
+        for a in unique_addresses
+        if (a not in cache or "matched_title" not in cache[a]) and a not in failures
+    ]
     print(
-        f"  ジオコーディング対象: {len(to_fetch)}件（キャッシュ済み: {len(unique_addresses) - len(to_fetch)}件）",
+        f"  ジオコーディング対象: {len(to_fetch)}件（キャッシュ済み: {len(unique_addresses) - len(to_fetch)}件、"
+        f"並列数: {GEOCODE_MAX_WORKERS}）",
         file=sys.stderr,
     )
     new_count = 0
-    for address in to_fetch:
-        result = geocode_address(address)
-        if result:
-            cache[address] = result
-        else:
-            failures[address] = {"last_attempt": datetime.now(timezone.utc).date().isoformat()}
-        new_count += 1
-        if new_count % checkpoint_every == 0:
-            print(f"  ... {new_count}/{len(to_fetch)}件 処理済み", file=sys.stderr)
-            CACHE_PATH.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
-            FAILURES_PATH.write_text(json.dumps(failures, ensure_ascii=False, indent=1), encoding="utf-8")
-        time.sleep(GEOCODE_DELAY_SEC)
+    with ThreadPoolExecutor(max_workers=GEOCODE_MAX_WORKERS) as executor:
+        future_to_address = {executor.submit(geocode_address, a): a for a in to_fetch}
+        for future in as_completed(future_to_address):
+            address = future_to_address[future]
+            result = future.result()
+            if result:
+                cache[address] = result
+            else:
+                failures[address] = {"last_attempt": datetime.now(timezone.utc).date().isoformat()}
+            new_count += 1
+            if new_count % checkpoint_every == 0:
+                print(f"  ... {new_count}/{len(to_fetch)}件 処理済み", file=sys.stderr)
+                CACHE_PATH.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
+                FAILURES_PATH.write_text(json.dumps(failures, ensure_ascii=False, indent=1), encoding="utf-8")
     return new_count
 
 
@@ -212,7 +246,13 @@ def main():
     print("4/4 GeoJSONを生成中...", file=sys.stderr)
     geojson, skipped = build_geojson(records, cache)
     OUTPUT_PATH.write_text(json.dumps(geojson, ensure_ascii=False), encoding="utf-8")
-    print(f"  出力: {len(geojson['features'])}件（位置未特定でスキップ: {skipped}件）", file=sys.stderr)
+    approx_count = sum(1 for f in geojson["features"] if f["properties"].get("location_approx"))
+    precise_count = len(geojson["features"]) - approx_count
+    print(
+        f"  出力: {len(geojson['features'])}件（位置未特定でスキップ: {skipped}件、"
+        f"地番一致: {precise_count}件 / 大字・字レベル概算: {approx_count}件）",
+        file=sys.stderr,
+    )
 
     META_PATH.write_text(
         json.dumps(
@@ -223,6 +263,8 @@ def main():
                 "total_facilities": len(records),
                 "geocoded_facilities": len(geojson["features"]),
                 "geocode_failed": skipped,
+                "location_precise": precise_count,
+                "location_approx": approx_count,
             },
             ensure_ascii=False,
             indent=1,

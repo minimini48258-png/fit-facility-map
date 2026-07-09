@@ -37,6 +37,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, -apple
 .legend-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 4px; cursor: pointer; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.2); }
+.approx-dot { background: transparent !important; border: 1.5px dashed #898781; }
+.precise-dot { background: transparent !important; border: 1.5px solid #898781; }
 
 .size-legend .size-row { display: flex; align-items: center; gap: 10px; font-size: 12px; margin-bottom: 6px; }
 .size-dot { border-radius: 50%; background: #eda100; opacity: 0.55; border: 1px solid rgba(0,0,0,0.3); flex-shrink: 0; }

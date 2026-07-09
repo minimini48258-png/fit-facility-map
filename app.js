@@ -51,7 +51,7 @@ function popupHtml(p) {
   ];
   const rowsHtml = rows.map(([k, v]) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`).join("");
   const approxNote = p.location_approx
-    ? '<div class="approx-note">※住所を一部簡略化してジオコーディングしたため、位置は概算です</div>'
+    ? '<div class="approx-note">※地番までは特定できず、大字・字レベルの代表地点です（実際の場所とずれる場合があります。破線の丸で表示）</div>'
     : "";
   return `<div class="fit-popup"><h3>設備ID: ${p.id}</h3><table>${rowsHtml}</table>${approxNote}</div>`;
 }
@@ -110,6 +110,8 @@ fetch("data/facilities.geojson")
         fillColor: color,
         fillOpacity: isLightFill ? 0.85 : 0.65,
         opacity: 0.9,
+        // 位置が大字・字レベルの概算（location_approx）の場合は破線にして区別する
+        dashArray: p.location_approx ? "3,3" : null,
       });
       marker.bindPopup(popupHtml(p));
       allEntries.push({ props: p, marker });
@@ -140,6 +142,12 @@ fetch("data/meta.json")
     const updated = new Date(meta.updated_at).toLocaleDateString("ja-JP");
     document.getElementById("meta").textContent =
       `更新日: ${updated} / 表示中: ${meta.geocoded_facilities.toLocaleString("ja-JP")}件（全${meta.total_facilities.toLocaleString("ja-JP")}件中）`;
+    const statEl = document.getElementById("precision-stat");
+    if (statEl && meta.location_precise !== undefined) {
+      const total = meta.location_precise + meta.location_approx;
+      const precisePct = total ? Math.round((meta.location_precise / total) * 100) : 0;
+      statEl.textContent = `地番一致 ${precisePct}%（${meta.location_precise.toLocaleString("ja-JP")}件）/ 概算 ${meta.location_approx.toLocaleString("ja-JP")}件`;
+    }
   })
   .catch(() => {
     document.getElementById("meta").textContent = "";
