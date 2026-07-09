@@ -1,10 +1,13 @@
 const CATEGORY_COLORS = {
   "太陽光": "#eda100",
-  "風力": "#2a78d6",
-  "水力": "#1baf7a",
-  "水力（既設導水路活用型リプレース）": "#1baf7a",
+  "風力": "#ffffff",
+  "水力": "#4fc3f7",
+  "水力（既設導水路活用型リプレース）": "#4fc3f7",
   "バイオマス": "#008300",
 };
+
+// 白塗りの風力マーカーは白い縁取りだと地図に溶け込むため、濃い縁取りに切り替える
+const LIGHT_FILL_CATEGORIES = new Set(["風力"]);
 
 const NAGANO_CENTER = [36.2, 138.05];
 
@@ -98,13 +101,14 @@ fetch("data/facilities.geojson")
       const p = feature.properties;
       const [lon, lat] = feature.geometry.coordinates;
       const color = CATEGORY_COLORS[p.category] || "#52514e";
+      const isLightFill = LIGHT_FILL_CATEGORIES.has(p.category);
       const marker = L.circleMarker([lat, lon], {
         renderer: canvasRenderer,
         radius: radiusForCapacity(p.capacity_kw),
-        color: "#ffffff",
+        color: isLightFill ? "#333333" : "#ffffff",
         weight: 1,
         fillColor: color,
-        fillOpacity: 0.65,
+        fillOpacity: isLightFill ? 0.85 : 0.65,
         opacity: 0.9,
       });
       marker.bindPopup(popupHtml(p));
