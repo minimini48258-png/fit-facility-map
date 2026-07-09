@@ -32,6 +32,18 @@
     <div class="size-row"><span class="size-dot" style="width:30px;height:30px"></span>1,000kW</div>
     <div class="size-row"><span class="size-dot" style="width:46px;height:46px"></span>2,000kW以上</div>
   </div>
+
+  <div class="legend">
+    <div class="legend-title">卒FIT状況（調達期間終了）</div>
+    <select id="fit-status-filter">
+      <option value="all">すべて表示</option>
+      <option value="expired">卒FIT済みのみ</option>
+      <option value="within1y">1年以内に卒FIT（済み含む）</option>
+      <option value="within3y">3年以内に卒FIT（済み含む）</option>
+      <option value="within5y">5年以内に卒FIT（済み含む）</option>
+    </select>
+    <div id="fit-status-count" class="meta"></div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

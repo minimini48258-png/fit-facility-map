@@ -65,6 +65,20 @@ def normalize_text(value):
     return s if s and s != "-" else None
 
 
+PROCUREMENT_END_RE = re.compile(r"(\d{4})年(\d{1,2})月")
+
+
+def parse_procurement_end_iso(text):
+    """'2033年11月' 形式の調達期間終了年月をフィルタ用の ISO 日付（月初）に変換する。"""
+    if not text:
+        return None
+    m = PROCUREMENT_END_RE.search(text)
+    if not m:
+        return None
+    year, month = int(m.group(1)), int(m.group(2))
+    return f"{year:04d}-{month:02d}-01"
+
+
 def parse_records(xlsx_path: Path):
     wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
     ws = wb["認定設備"]
@@ -88,6 +102,9 @@ def parse_records(xlsx_path: Path):
                 "operation_start_reported": normalize_text(row[13]),
                 "procurement_period_end": normalize_text(row[18]) if len(row) > 18 else None,
             }
+        )
+        records[-1]["procurement_period_end_iso"] = parse_procurement_end_iso(
+            records[-1]["procurement_period_end"]
         )
     return records
 
@@ -129,18 +146,25 @@ def geocode_address(address: str):
     return None
 
 
-def build_geocode_index(records, cache: dict, failures: dict):
+def build_geocode_index(records, cache: dict, failures: dict, checkpoint_every=200):
     unique_addresses = sorted({r["address"] for r in records if r["address"]})
+    to_fetch = [a for a in unique_addresses if a not in cache and a not in failures]
+    print(
+        f"  ジオコーディング対象: {len(to_fetch)}件（キャッシュ済み: {len(unique_addresses) - len(to_fetch)}件）",
+        file=sys.stderr,
+    )
     new_count = 0
-    for address in unique_addresses:
-        if address in cache or address in failures:
-            continue
+    for address in to_fetch:
         result = geocode_address(address)
         if result:
             cache[address] = result
         else:
             failures[address] = {"last_attempt": datetime.now(timezone.utc).date().isoformat()}
         new_count += 1
+        if new_count % checkpoint_every == 0:
+            print(f"  ... {new_count}/{len(to_fetch)}件 処理済み", file=sys.stderr)
+            CACHE_PATH.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
+            FAILURES_PATH.write_text(json.dumps(failures, ensure_ascii=False, indent=1), encoding="utf-8")
         time.sleep(GEOCODE_DELAY_SEC)
     return new_count
 

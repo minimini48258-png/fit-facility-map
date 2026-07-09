@@ -23,6 +23,7 @@ const satelliteLayer = L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamles
 L.control.layers({ "地図": standardLayer, "航空写真": satelliteLayer }, null, { position: "topright" }).addTo(map);
 
 const canvasRenderer = L.canvas({ padding: 0.5 });
+const visibleLayer = L.layerGroup().addTo(map);
 
 function radiusForCapacity(kw) {
   if (!kw || kw <= 0) return 3;
@@ -43,7 +44,7 @@ function popupHtml(p) {
     ["新規認定日", p.approved_date || "-"],
     ["運転開始（予定）", p.operation_start_planned || "-"],
     ["運転開始（報告）", p.operation_start_reported || "-"],
-    ["調達期間終了", p.procurement_period_end || "-"],
+    ["調達期間終了（卒FIT）", p.procurement_period_end || "-"],
   ];
   const rowsHtml = rows.map(([k, v]) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`).join("");
   const approxNote = p.location_approx
@@ -52,9 +53,42 @@ function popupHtml(p) {
   return `<div class="fit-popup"><h3>設備ID: ${p.id}</h3><table>${rowsHtml}</table>${approxNote}</div>`;
 }
 
-const categoryLayers = {};
-for (const cat of Object.keys(CATEGORY_COLORS)) {
-  categoryLayers[cat] = L.layerGroup().addTo(map);
+// 卒FITフィルターのしきい値（今日からの年数）。null は「済みのみ」を表す上限なし条件。
+const FIT_FILTER_THRESHOLDS = { expired: 0, within1y: 1, within3y: 3, within5y: 5 };
+
+function passesFitFilter(endIso, filterValue) {
+  if (filterValue === "all") return true;
+  if (!endIso) return false; // 卒FIT時期不明の設備は「すべて表示」以外では対象外
+  const endDate = new Date(endIso);
+  const today = new Date();
+  if (filterValue === "expired") return endDate <= today;
+  const years = FIT_FILTER_THRESHOLDS[filterValue];
+  const threshold = new Date(today);
+  threshold.setFullYear(threshold.getFullYear() + years);
+  return endDate <= threshold;
+}
+
+const state = {
+  activeCategories: new Set(Object.keys(CATEGORY_COLORS)),
+  fitFilter: "all",
+};
+
+let allEntries = []; // [{ props, marker }]
+
+function applyFilters() {
+  visibleLayer.clearLayers();
+  let shown = 0;
+  for (const entry of allEntries) {
+    const p = entry.props;
+    if (!state.activeCategories.has(p.category)) continue;
+    if (!passesFitFilter(p.procurement_period_end_iso, state.fitFilter)) continue;
+    visibleLayer.addLayer(entry.marker);
+    shown++;
+  }
+  const countEl = document.getElementById("fit-status-count");
+  if (countEl) {
+    countEl.textContent = state.fitFilter === "all" ? "" : `該当: ${shown.toLocaleString("ja-JP")}件`;
+  }
 }
 
 fetch("data/facilities.geojson")
@@ -74,17 +108,21 @@ fetch("data/facilities.geojson")
         opacity: 0.9,
       });
       marker.bindPopup(popupHtml(p));
-      const group = categoryLayers[p.category];
-      if (group) group.addLayer(marker);
+      allEntries.push({ props: p, marker });
     }
+    applyFilters();
+
     document.querySelectorAll("#panel input[type=checkbox]").forEach((el) => {
       el.addEventListener("change", () => {
         const cat = el.dataset.category;
-        const group = categoryLayers[cat];
-        if (!group) return;
-        if (el.checked) map.addLayer(group);
-        else map.removeLayer(group);
+        if (el.checked) state.activeCategories.add(cat);
+        else state.activeCategories.delete(cat);
+        applyFilters();
       });
+    });
+    document.getElementById("fit-status-filter").addEventListener("change", (e) => {
+      state.fitFilter = e.target.value;
+      applyFilters();
     });
   })
   .catch((err) => {

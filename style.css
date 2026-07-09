@@ -41,6 +41,20 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, -apple
 .size-legend .size-row { display: flex; align-items: center; gap: 10px; font-size: 12px; margin-bottom: 6px; }
 .size-dot { border-radius: 50%; background: #eda100; opacity: 0.55; border: 1px solid rgba(0,0,0,0.3); flex-shrink: 0; }
 
+#fit-status-filter {
+  width: 100%;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(11,11,11,0.2);
+  background: #fcfcfb;
+  color: #0b0b0b;
+}
+@media (prefers-color-scheme: dark) {
+  #fit-status-filter { background: #1a1a19; color: #ffffff; border-color: rgba(255,255,255,0.2); }
+}
+#fit-status-count { margin-top: 6px; margin-bottom: 0; }
+
 .fit-popup { font-size: 13px; line-height: 1.5; min-width: 200px; }
 .fit-popup h3 { font-size: 13px; margin: 0 0 6px; }
 .fit-popup table { border-collapse: collapse; width: 100%; }
