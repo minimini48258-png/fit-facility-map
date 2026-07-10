@@ -1,8 +1,10 @@
 {
- "updated_at": "2026-07-09T16:16:36.424331+00:00",
+ "updated_at": "2026-07-10T00:11:09.165042+00:00",
  "source": "https://www.fit-portal.go.jp/publicinfo",
  "prefecture": "長野県",
  "total_facilities": 11925,
- "geocoded_facilities": 11925,
- "geocode_failed": 0
+ "geocoded_facilities": 11910,
+ "geocode_failed": 15,
+ "location_precise": 3655,
+ "location_approx": 8255
 }

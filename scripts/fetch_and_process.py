@@ -194,6 +194,9 @@ def build_geocode_index(records, cache: dict, failures: dict, checkpoint_every=2
             if result:
                 cache[address] = result
             else:
+                # 再取得に失敗した場合、精度未検証の古いキャッシュ（今回のロジック導入前のもの）を
+                # 誤って「精度確認済み」として残さないよう削除する
+                cache.pop(address, None)
                 failures[address] = {"last_attempt": datetime.now(timezone.utc).date().isoformat()}
             new_count += 1
             if new_count % checkpoint_every == 0:
