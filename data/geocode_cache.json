@@ -78062,5 +78062,26 @@
   "approx": true,
   "matched_query": "長野県駒ヶ根市飯坂２－４２９８－３",
   "matched_title": "長野県駒ヶ根市飯坂二丁目"
+ },
+ "長野県茅野市湖東３４２７": {
+  "lat": 36.025398,
+  "lon": 138.20433,
+  "approx": true,
+  "matched_query": "長野県茅野市湖東３４２７",
+  "matched_title": "長野県茅野市湖東"
+ },
+ "長野県下伊那郡売木村３３０‐６": {
+  "lat": 35.271111,
+  "lon": 137.711105,
+  "approx": true,
+  "matched_query": "長野県下伊那郡売木村３３０‐６",
+  "matched_title": "長野県下伊那郡売木村"
+ },
+ "長野県下伊那郡高森町下市田２４７８‐２": {
+  "lat": 35.544605,
+  "lon": 137.874954,
+  "approx": true,
+  "matched_query": "長野県下伊那郡高森町下市田２４７８‐２",
+  "matched_title": "長野県高森町下市田"
  }
 }

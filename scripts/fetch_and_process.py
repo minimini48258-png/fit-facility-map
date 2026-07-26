@@ -9,6 +9,7 @@ FITポータル（https://www.fit-portal.go.jp/publicinfo）から長野県のFI
 住所の緯度経度は国土地理院 address-search API で取得し、data/geocode_cache.json に
 キャッシュする（次回実行時は新規・変更住所のみ問い合わせる）。
 """
+import html
 import json
 import re
 import sys
@@ -28,11 +29,14 @@ FAILURES_PATH = DATA_DIR / "geocode_failures.json"
 OUTPUT_PATH = DATA_DIR / "facilities.geojson"
 META_PATH = DATA_DIR / "meta.json"
 
-# FITポータル 長野県ファイルのダウンロードURL（都道府県別ファイルID）
-NAGANO_FILE_URL = (
-    "https://www.fit-portal.go.jp/servlet/servlet.FileDownload"
-    "?retURL=%2Fapex%2Fpublicinfo&file=00PJ200000MSqTcMAL"
+# FITポータルの都道府県別ファイルIDは定期的にローテーションするため、ハードコードせず
+# 一覧ページから毎回「長野県」の現在のダウンロードリンクを解決する。
+PUBLIC_INFO_PAGE_URL = "https://www.fit-portal.go.jp/PublicInfo"
+PREFECTURE_NAME = "長野県"
+DOWNLOAD_LINK_RE = re.compile(
+    r'<a[^>]*href="(/servlet/servlet\.FileDownload[^"]*)"[^>]*>(.*?)</a>', re.S
 )
+TAG_RE = re.compile(r"<[^>]+>")
 
 INCLUDED_CATEGORIES = {"太陽光", "風力", "水力", "水力（既設導水路活用型リプレース）", "バイオマス"}
 
@@ -44,9 +48,25 @@ USER_AGENT = "fit-facility-map/1.0 (internal tool; contact via GitHub repo)"
 EXCEL_EPOCH = datetime(1899, 12, 30)
 
 
+def resolve_nagano_file_url() -> str:
+    """一覧ページを都度取得し、「長野県」の現在のダウンロードURLを解決する。
+    ファイルIDは資源エネルギー庁側の更新のたびにローテーションするため固定できない。"""
+    resp = requests.get(PUBLIC_INFO_PAGE_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    resp.raise_for_status()
+    for href, label_html in DOWNLOAD_LINK_RE.findall(resp.text):
+        label = html.unescape(TAG_RE.sub("", label_html)).strip()
+        if label == PREFECTURE_NAME:
+            return urllib.parse.urljoin(PUBLIC_INFO_PAGE_URL, html.unescape(href))
+    raise RuntimeError(
+        f"{PREFECTURE_NAME}のダウンロードリンクが一覧ページ（{PUBLIC_INFO_PAGE_URL}）内に見つかりませんでした。"
+        "資源エネルギー庁側でページ構成が変わった可能性があります。"
+    )
+
+
 def download_excel() -> Path:
     dest = DATA_DIR / "_source_nagano.xlsx"
-    resp = requests.get(NAGANO_FILE_URL, headers={"User-Agent": USER_AGENT}, timeout=60)
+    file_url = resolve_nagano_file_url()
+    resp = requests.get(file_url, headers={"User-Agent": USER_AGENT}, timeout=60)
     resp.raise_for_status()
     dest.write_bytes(resp.content)
     return dest
