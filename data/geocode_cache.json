@@ -78083,5 +78083,68 @@
   "approx": true,
   "matched_query": "長野県下伊那郡高森町下市田２４７８‐２",
   "matched_title": "長野県高森町下市田"
+ },
+ "長野県大町市美麻１５２７９": {
+  "lat": 36.582199,
+  "lon": 137.897079,
+  "approx": true,
+  "matched_query": "長野県大町市美麻１５２７９",
+  "matched_title": "長野県大町市美麻"
+ },
+ "長野県上伊那郡宮田村１８０７": {
+  "lat": 35.76889,
+  "lon": 137.944443,
+  "approx": true,
+  "matched_query": "長野県上伊那郡宮田村１８０７",
+  "matched_title": "長野県上伊那郡宮田村"
+ },
+ "長野県北佐久郡立科町芦田６４１－１": {
+  "lat": 36.236881,
+  "lon": 138.299683,
+  "approx": true,
+  "matched_query": "長野県北佐久郡立科町芦田６４１－１",
+  "matched_title": "長野県立科町芦田"
+ },
+ "長野県大町市美麻１５２８９": {
+  "lat": 36.582199,
+  "lon": 137.897079,
+  "approx": true,
+  "matched_query": "長野県大町市美麻１５２８９",
+  "matched_title": "長野県大町市美麻"
+ },
+ "長野県大町市美麻１５２９６": {
+  "lat": 36.582199,
+  "lon": 137.897079,
+  "approx": true,
+  "matched_query": "長野県大町市美麻１５２９６",
+  "matched_title": "長野県大町市美麻"
+ },
+ "長野県大町市美麻１５３２４": {
+  "lat": 36.582199,
+  "lon": 137.897079,
+  "approx": true,
+  "matched_query": "長野県大町市美麻１５３２４",
+  "matched_title": "長野県大町市美麻"
+ },
+ "長野県大町市美麻１５３２８": {
+  "lat": 36.582199,
+  "lon": 137.897079,
+  "approx": true,
+  "matched_query": "長野県大町市美麻１５３２８",
+  "matched_title": "長野県大町市美麻"
+ },
+ "長野県東御市祢津字塚久保２１３５－１": {
+  "lat": 36.395092,
+  "lon": 138.372467,
+  "approx": true,
+  "matched_query": "長野県東御市祢津字塚久保２１３５－１",
+  "matched_title": "長野県東御市祢津"
+ },
+ "長野県東御市祢津字町屋３０７８－１": {
+  "lat": 36.395092,
+  "lon": 138.372467,
+  "approx": true,
+  "matched_query": "長野県東御市祢津字町屋３０７８－１",
+  "matched_title": "長野県東御市祢津"
  }
 }
