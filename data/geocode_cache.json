@@ -78146,5 +78146,19 @@
   "approx": true,
   "matched_query": "長野県東御市祢津字町屋３０７８－１",
   "matched_title": "長野県東御市祢津"
+ },
+ "長野県長野市宮沖３４９７‐４": {
+  "lat": 36.6283,
+  "lon": 138.159744,
+  "approx": false,
+  "matched_query": "長野県長野市宮沖３４９７‐４",
+  "matched_title": "長野県長野市宮沖３４９７番地"
+ },
+ "長野県佐久市春日２６８２‐３": {
+  "lat": 36.223984,
+  "lon": 138.351334,
+  "approx": false,
+  "matched_query": "長野県佐久市春日２６８２‐３",
+  "matched_title": "長野県佐久市春日２６８２番地"
  }
 }
